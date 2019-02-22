@@ -89,24 +89,52 @@ def handle_msg(ctx):
             s = json.dumps(d)
             r = requests.post('https://trace.moe/api/search', data=s)
             result = json.loads(r.content)
-            pprint(result)
+            # pprint(result)
             what_min = int(result['docs'][0]['from'] // 60)
             what_sec = int(result['docs'][0]['from'] % 60)
-            anime_detail = result['docs'][0]['anime']+'\nepisode {0} time {1}:{2}\n'+'放送时间 {3}\n'+'相似度 百分之{4} '
+            anime_detail = 'name: ' + result['docs'][0]['anime']+'\nepisode: {0}, time: {1}min:{2}s\n'+'放送时间 {3}\n'+'相似度 百分之{4} '
             anime_detail = anime_detail.format(result['docs'][0]['episode'], what_min, what_sec, result['docs'][0]['season'], int(result['docs'][0]['similarity']*100))
             bot.send_group_msg(group_id=ctx['group_id'], message=anime_detail)
 
-	#天气
+
     if re.search(r'(.+)天气$', msg):
         city = re.search(r'(.+)天气$', msg).group(1)
         payload = {'address': city, 'tdsourcetag': 's_pcqq_aiomsg'}
         r = requests.get('https://api.imjad.cn/weather/v1/', params=payload)
         result = json.loads(r.content)
-        wea_msg = '{}, 最高温:{}, 最低温:{}, pm2.5均值:{}, 感冒易发程度:{}, 整体感觉:{}, {}'.format(result['result']['hourly']['description'], int(result['result']['daily']['temperature'][0]['max']), int(result['result']['daily']['temperature'][0]['min']), int(result['result']['daily']['pm25'][0]['avg']), result['result']['daily']['coldRisk'][0]['desc'], result['result']['daily']['comfort'][0]['desc'], result['result']['forecast_keypoint'])
+        ##pprint(result)
+        wea_msg = '{}, 最高温:{}摄氏度, 最低温:{}摄氏度, pm2.5最大值:{}, 平均风速：{}km/h，感冒易发程度:{}, 整体感觉:{}, {}'.format(result['result']['hourly']['description'], int(result['result']['daily']['temperature'][0]['max']), int(result['result']['daily']['temperature'][0]['min']), int(result['result']['daily']['pm25'][0]['max']), int(result['result']['daily']['wind'][0]['avg']['speed']),result['result']['daily']['coldRisk'][0]['desc'], result['result']['daily']['comfort'][0]['desc'], result['result']['forecast_keypoint'])
         bot.send_group_msg(group_id=ctx['group_id'], message=wea_msg)
-		
 
 
+    #知乎日报
+    if msg == '知乎日报':
+        STORY_URL_FORMAT = 'https://daily.zhihu.com/story/{}'
+        reply  = '最新的知乎日报内容如下:\n'
+        r = requests.get('https://news-at.zhihu.com/api/4/news/latest', headers={'User-Agent':'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36'})
+        data = json.loads(r.content)
+        for story in data['stories']:
+            url = STORY_URL_FORMAT.format(story['id'])
+            title = story['title']
+            reply += f'\n{title}\n{url}'
+        bot.send_group_msg(group_id=ctx['group_id'], message=reply)
+
+    #番据索引
+    if msg == '番剧索引':
+        r = requests.get('https://bangumi.bilibili.com/media/web_api/search/result?season_version=-1&area=-1&is_finish=-1&copyright=-1&season_status=-1&season_month=1&pub_date=2019&style_id=-1&order=3&st=1&sort=0&page=1&season_type=1&pagesize=20')
+        data = json.loads(r.content)
+        pprint(data)
+        reply = '当前番据索引如下\n'
+        for item in data['result']['data']:
+            title = item['title']
+            play_time = item['order']['play']
+            follow = item['order']['follow']
+            index_show = item['index_show']
+            score = item['order']['score']
+            link = item['link']
+            reply += f'\n{title},{play_time},{follow},{index_show},{score},{link}\n'
+        print(reply)
+        bot.send_group_msg(group_id=ctx['group_id'], message=reply)
     # 复读检测
     if repeat_times[group_pos_id] == 0:
         list_group_msg[group_pos_id] = msg
@@ -166,18 +194,22 @@ def handle_msg(ctx):
         bot.send_group_msg(group_id=ctx['group_id'], message='你喊这个呆瓜做什么')
 
     elif msg.startswith('口我'):
-        if re.match(r'^口我(\d{1,8})',msg):
-            ban_sec = int(re.match(r'^口我(\d{1,20})',msg).group(1))
+        if re.match(r'^口我\s*(\d{1,8})',msg):
+            ban_sec = int(re.match(r'^口我\s*(\d{1,20})',msg).group(1))
             if ban_sec <= 10000:
-                bot.send_group_msg(group_id=ctx['group_id'], message='就是你想要被口球吗,真是变态呢,就满足你这次吧')
-                bot.set_group_ban(group_id=ctx['group_id'], user_id=ctx['user_id'], duration=ban_sec)
+                if ban_sec == 0:
+                    bot.send_group_msg(group_id=ctx['group_id'], message='你是笨蛋吗?0怎么口球,作为惩罚，妲己宝宝口球你%d分钟' % 10)
+                    bot.set_group_ban(group_id=ctx['group_id'], user_id=ctx['user_id'], duration=600)
+                else:
+                    bot.send_group_msg(group_id=ctx['group_id'], message='就是你想要被口球吗,真是变态呢,就满足你这次吧')
+                    bot.set_group_ban(group_id=ctx['group_id'], user_id=ctx['user_id'], duration=ban_sec)
             elif ban_sec >= 10086 and ban_sec < 123456789:
                 bot.send_group_msg(group_id=ctx['group_id'], message='蛤？你是抖M吗,居然要求被口%d秒' % ban_sec)
             elif 10000 < ban_sec < 10086:
                 bot.send_group_msg(group_id=ctx['group_id'], message='如果你像小狗一样跪下来求我也不是不可以')
             else:
                 bot.send_group_msg(group_id=ctx['group_id'], message='嘻嘻嘻那可是你自找的')
-                bot.set_group_ban(group_id=ctx['group_id'], user_id=ctx['user_id'], duration=ban_sec)
+                bot.set_group_ban(group_id=ctx['group_id'], user_id=ctx['user_id'], duration=2591940)
 
         else:
             ban_sec = random.randint(30, 120)
@@ -189,13 +221,13 @@ def handle_msg(ctx):
 
     #主动调用禁言
     if msg.startswith('ban') and (ctx['user_id'] == 1821726849 or ctx['user_id'] == 953075867):
-        ban_other_id = re.match(r'^ban\s+(\d{6,10})\s+(\d{1,6})', msg).group(1)
-        ban_other_min = re.match(r'^ban\s+(\d{6,10})\s+(\d{1,6})', msg).group(2)
+        ban_other_id = re.match(r'^ban.+qq=(\d{6,10})]\s*(\d{1,6})', msg).group(1)
+        ban_other_min = re.match(r'^ban.+qq=(\d{6,10})]\s*(\d{1,6})', msg).group(2)
         #两类型都是str
         bot.set_group_ban(group_id=ctx['group_id'], user_id=int(ban_other_id), duration=int(ban_other_min) * 60)
     #主动解禁
     if msg.startswith('free') and ctx['user_id'] == 1821726849:
-        free_id = int(re.match(r'^free\s+(\d{6,10})', msg).group(1))
+        free_id = int(re.match(r'^free.+qq=(\d{6,10})', msg).group(1))
         bot.set_group_ban(group_id=ctx['group_id'], user_id=free_id, duration=0)
 
 
