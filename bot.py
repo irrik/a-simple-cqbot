@@ -8,8 +8,6 @@ from pprint import pprint
 
 from cqhttp import CQHttp
 
-from pixivpy3 import *
-
 trace_str = ''
 
 bot = CQHttp(api_root='http://127.0.0.1:5700')
@@ -105,7 +103,6 @@ def handle_msg(ctx):
         ##pprint(result)
         wea_msg = '{}, 最高温:{}摄氏度, 最低温:{}摄氏度, pm2.5最大值:{}, 平均风速：{}km/h，感冒易发程度:{}, 整体感觉:{}, {}'.format(result['result']['hourly']['description'], int(result['result']['daily']['temperature'][0]['max']), int(result['result']['daily']['temperature'][0]['min']), int(result['result']['daily']['pm25'][0]['max']), int(result['result']['daily']['wind'][0]['avg']['speed']),result['result']['daily']['coldRisk'][0]['desc'], result['result']['daily']['comfort'][0]['desc'], result['result']['forecast_keypoint'])
         bot.send_group_msg(group_id=ctx['group_id'], message=wea_msg)
-
 
     #知乎日报
     if msg == '知乎日报':
