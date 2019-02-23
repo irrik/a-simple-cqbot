@@ -67,19 +67,19 @@ def handle_msg(ctx):
     if msg.startswith('以图搜番'):
         if re.search(r'url=', msg):
             # pic_url = re.search(r'url=(.*)', msg).group(1)
-            file_path = r'C:\Users\Elliot\Desktop\book'
+            file_path = r'C:\Users\Administrator\Desktop\book'
             img_url = re.search(r'url=(.*)', msg).group(1)
             print(img_url)
             save_img(img_url, 'test', file_path)
 
             # 将图片转成base64编码保存到trace_str变量中
-            with open(r'C:\Users\Elliot\Desktop\book\test.jpg', 'rb') as f:
+            with open(r'C:\Users\Administrator\Desktop\book\test.jpg', 'rb') as f:
                 global trace_str
                 data = f.read()
                 encodestr = base64.b64encode(data)
                 trace_str = str(encodestr, 'utf-8')
             # print(trace_str)
-            os.remove(r'C:\Users\Elliot\Desktop\book\test.jpg')
+            #os.remove(r'C:\Users\Administrator\Desktop\book\test.jpg')
 
             # 调用api和整理返回结果
             d = {'image': trace_str}
@@ -93,6 +93,7 @@ def handle_msg(ctx):
                 'anime'] + '\nepisode: {0}, time: {1}min:{2}s\n' + '放送时间 {3}\n' + '相似度 百分之{4} '
             anime_detail = anime_detail.format(result['docs'][0]['episode'], what_min, what_sec,
                                                result['docs'][0]['season'], int(result['docs'][0]['similarity'] * 100))
+            os.remove(r'C:\Users\Administrator\Desktop\book\test.jpg')
             bot.send_group_msg(group_id=ctx['group_id'], message=anime_detail)
 
     if re.search(r'(.+)天气$', msg):
@@ -121,22 +122,58 @@ def handle_msg(ctx):
             reply += f'\n{title}\n{url}'
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
 
+
+    #豆瓣搜书
+    if msg.startswith('搜书'):
+        #提取书名
+        keyword = re.match(r'搜书\s*(.+)', msg).groups(1)
+        #构造url
+        url = 'https://api.douban.com/v2/book/search?q={}'.format(keyword)
+
+        r = requests.get(url)
+        #整理结果并且提取信息
+        res = json.loads(r.content)
+        author = ','.join(res['books'][0]['author'])
+        score = res['books'][0]['rating']['average']
+        pubdate = res['books'][0]['pubdate']
+        price = res['books'][0]['price']
+        L = [item['title'] for item in res['books'][0]['tags']]
+        book_tag = ','.join(L)
+
+        reply = f'author: {author}\n 价格: {price},豆瓣得分: {score}, 出版日期: {pubdate}\n标签: {book_tag}'
+        bot.send_group_msg(group_id=ctx['group_id'], message=reply)
     # 豆瓣热映电影
     if msg == '热映电影':
         r = requests.get('https://api.douban.com/v2/movie/in_theaters?city=b%E5%8C%97%E4%BA%AC&start=0&count=10')
 
         res = json.loads(r.content)
 
-        reply = '目前前十热映电影(数据来源北京)\n'
+        reply = '目前前十热映电影(数据来源豆瓣)\n'
         data = res['subjects']
         # 提取内容
         for item in data:
             title = item['title']
             score = item['rating']['average']
             film_genres = ','.join(item['genres'])
-            reply += f'name: {title}, 豆瓣得分: {score}, 电影类型: {film_genres}\n'
+            original_title = item['original_title']
+            reply += f'name: {title}\noriginal_name: {original_title}\n 豆瓣得分: {score}, 电影类型: {film_genres}\n'
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
 
+    #即将上映
+    if msg == '即将上映':
+        r = requests.get('https://api.douban.com/v2/movie/coming_soon?start=0&count=10')
+        # 获取返回
+        res = json.loads(r.content)
+
+        reply = '目前前十热映电影(数据来源豆瓣)\n'
+        data = res['subjects']
+        # 提取内容
+        for item in data:
+            title = item['title']
+            film_genres = ','.join(item['genres'])
+            original_title = item['original_title']
+            reply += f'name: {title}\noriginal_name: {original_title}\n电影类型: {film_genres}\n'
+        bot.send_group_msg(group_id=ctx['group_id'], message=reply)
     # 番据索引
     if msg == '番剧索引':
         r = requests.get(
