@@ -142,6 +142,25 @@ def handle_msg(ctx):
 
         reply = f'author: {author}\n 价格: {price},豆瓣得分: {score}, 出版日期: {pubdate}\n标签: {book_tag}'
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
+
+    #豆瓣搜索电影
+    if msg.startswith('搜影'):
+        keyword = re.match(r'搜影\s*(.+)', msg).groups(1)
+        #构造url
+        url = 'https://api.douban.com/v2/movie/search?q={}'.format(keyword)
+        r = requests.get(url)
+        reply = ''
+        # 整理结果并且提取信息
+        res = json.loads(r.content)
+        title = res['subjects'][0]['title']
+        original_title = res['subjects'][0]['original_title']
+        score = res['subjects'][0]['rating']['average']
+        film_genres = ','.join(res['subjects'][0]['genres'])
+        year = res['subjects'][0]['year']
+        actors = ','.join([item['name'] for item in res['subjects'][0]['casts']])
+        reply += f'name: {title}\noriginal_name: {original_title}\n 主演: {actors}\n豆瓣得分:{score}(得分为零为未有评分)\n 电影类型: {film_genres}\n year:{year}'
+
+        bot.send_group_msg(group_id=ctx['group_id'], message=reply)
     # 豆瓣热映电影
     if msg == '热映电影':
         r = requests.get('https://api.douban.com/v2/movie/in_theaters?city=b%E5%8C%97%E4%BA%AC&start=0&count=10')
