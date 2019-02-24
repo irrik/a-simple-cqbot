@@ -63,6 +63,47 @@ def handle_msg(ctx):
         sentance = result['hitokoto'] + '-' + result['source']
         bot.send_group_msg(group_id=ctx['group_id'], message=sentance)
 
+    # 搜图
+    if msg.startswith('搜图'):
+        img_url = re.search(r'url=(.*)', msg).group(1)
+        FORMAT_URL = 'https://saucenao.com/search.php?db=999&output_type=2&testmode=1&numres=16&url={}'
+        url = FORMAT_URL.format(img_url)
+
+        r = requests.get(url)
+        res = json.loads(r.content)
+
+        reply = '搜图结果为:\n'
+
+        similarity = res['results'][0]['header']['similarity']
+        if float(similarity) < 75:
+            bot.send_group_msg(group_id=ctx['group_id'], message='在Pixiv没有找到相应的内容哦QAQ,由于只收录了Pixiv接口,咱无能为力呢')
+            return
+        img_link = res['results'][0]['data'].get('ext_urls','暂无相关信息')
+        title = res['results'][0]['data'].get('title','暂无相关信息')
+        pixiv_id = res['results'][0]['data'].get('pixiv_id', '暂无相关信息')
+        author = res['results'][0]['data'].get('member_name','暂无相关信息')
+
+        reply += f'相似度: {similarity}\n图片直链: {img_link}\ntitle: {title}\npixiv_id: {pixiv_id}\nauthor: {author}'
+        bot.send_group_msg(group_id=ctx['group_id'], message=reply)
+     #以图搜本
+    if msg.startswith('以图搜本'):
+        img_url = re.search(r'url=(.*)', msg).group(1)
+        FORMAT_URL = 'https://saucenao.com/search.php?db=999&output_type=2&testmode=1&numres=16&url={}'
+        url = FORMAT_URL.format(img_url)
+        r = requests.get(url)
+        res = json.loads(r.content)
+
+        similarity = res['results'][0]['header'].get('similarity')
+        if float(similarity) < 70:
+            bot.send_group_msg(group_id=ctx['group_id'], message='404 Not Found!找不到相应结果惹')
+            return
+        reply = '搜本结果为:\n'
+        author = res['results'][0]['data'].get('creator', '无相关信息')
+        eng_name = res['results'][0]['data'].get('eng_name', 'QAQ没有相关信息哦')
+        jp_name = res['results'][0]['data'].get('jp_name', 'QAQ没有相关信息哦')
+        reply += f'相似度: {similarity}\nauthor: {author}\neng_name: {eng_name}\njp_name: {jp_name}'
+        bot.send_group_msg(group_id=ctx['group_id'], message=reply)
+
     # 搜番
     if msg.startswith('以图搜番'):
         if re.search(r'url=', msg):
