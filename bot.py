@@ -1,4 +1,4 @@
-import random
+import random, time
 
 from urllib.request import urlretrieve
 
@@ -13,6 +13,10 @@ trace_str = ''
 bot = CQHttp(api_root='http://127.0.0.1:5700')
 repeat_times = [0, 0, 0]
 list_id = [[], [], []]
+lesson_list = ['没课', '周一:\n一二节: 大学物理B(1)-三江楼605\n三四节: 线性代数-三江楼504\n五六节: 高等数学A(II)-三江401', '周二:\n'
+               '一二节: 大学英语(II)-主楼503\n三四节: 大学体育(基础)(II)', '周三:\n一二节: 大学物理\n三四节: 中国近代史纲要-三江404\n七八节: 高等数学A(II)-三江楼401',
+               '周四:\n一二节: 大学物理B(1)-三江楼605\n三四节: 高等数学A(II)-三江401\n五六节: 线性代数-三江楼504',
+               '周五:\n一二节: 面向对象程序设计A-三江楼411\n三四节: 中国近代史纲要-三江404', '没课']
 
 # 分群组记录复读和上次消息消息和群员昵称
 list_group_nickname = [[], [], []]
@@ -251,6 +255,13 @@ def handle_msg(ctx):
             reply += f'\n{title},{play_time},{follow},{index_show},{score},{link}\n'
         print(reply)
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
+
+    #课程表
+    if msg == '课程表':
+        a = time.localtime()
+        b = int(time.strftime('%w', a))
+        bot.send_group_msg(group_id=ctx['group_id'], message=lesson_list[b])
+
     # 复读检测
     if repeat_times[group_pos_id] == 0:
         list_group_msg[group_pos_id] = msg
