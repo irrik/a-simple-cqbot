@@ -1,4 +1,4 @@
-import random, time
+import random, time, threading
 
 from urllib.request import urlretrieve
 
@@ -23,6 +23,24 @@ list_group_nickname = [[], [], []]
 list_group_id = [391539696, 649092523, 680753147]
 list_group_msg = ["", "", ""]
 
+# 定义定时函数
+def loop():
+    local_time = time.localtime(time.time())
+    local_hour = local_time[3]
+    if local_hour > 8:
+        wait_hour = 24-local_hour+8
+    else:
+        wait_hour = 8-local_hour
+    local_min = local_time[4]
+    local_second = local_time[5]
+    wait_time = wait_hour*3600 - local_min*60 - local_second
+    time.sleep(wait_time)
+    while True:
+        bot.send_private_msg(user_id=1821726849, message='早哇QAQ,今天打算做什么呢,要尽早规划好哦')
+        time.sleep(36000)
+        bot.send_private_msg(user_id=1821726849, message='晚上好喵,今天的规划都完成了吗?')
+        time.sleep(50400)
+
 
 # 定义下载图片函数
 def save_img(img_url, file_name, file_path='book'):
@@ -45,6 +63,9 @@ def save_img(img_url, file_name, file_path='book'):
     except Exception as e:
         print('错误 ：', e)
 
+# 定义一个新的线程
+t = threading.Thread(target=loop, name='LoopThread')
+t.start()
 
 @bot.on_message('group')
 def handle_msg(ctx):
@@ -255,12 +276,12 @@ def handle_msg(ctx):
             reply += f'\n{title},{play_time},{follow},{index_show},{score},{link}\n'
         print(reply)
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
-
-    #课程表
+    # 课程表
     if msg == '课程表':
         a = time.localtime()
         b = int(time.strftime('%w', a))
         bot.send_group_msg(group_id=ctx['group_id'], message=lesson_list[b])
+
 
     # 复读检测
     if repeat_times[group_pos_id] == 0:
@@ -313,10 +334,6 @@ def handle_msg(ctx):
         ban_sec = random.randint(30, 120)
         bot.send_group_msg(group_id=ctx['group_id'], message='说脏话是不对的哦,要好好调教一下才行呢,作为惩罚,口球你%d秒' % ban_sec)
         bot.set_group_ban(group_id=ctx['group_id'], user_id=ctx['user_id'], duration=ban_sec)
-    elif re.search(r'二木|木头', msg):
-        if ctx['group_id'] == 391539696:
-            bot.send_group_msg(group_id=ctx['group_id'], message='说木头是不对的哦,要好好调教一下才行呢,作为惩罚,口球你12小时')
-            bot.set_group_ban(group_id=ctx['group_id'], user_id=ctx['user_id'], duration=3600 * 12)
 
     elif re.search(r'燕坚', msg):
         bot.send_group_msg(group_id=ctx['group_id'], message='你喊这个呆瓜做什么')
@@ -354,15 +371,14 @@ def handle_msg(ctx):
         # 两类型都是str
         bot.set_group_ban(group_id=ctx['group_id'], user_id=int(ban_other_id), duration=int(ban_other_min) * 60)
     # 主动解禁
-    if msg.startswith('free') and ctx['user_id'] == 1821726849:
+    if msg.startswith('free') and (ctx['user_id'] == 1821726849 or ctx['user_id'] == 953075867):
         free_id = int(re.match(r'^free.+qq=(\d{6,10})', msg).group(1))
         bot.set_group_ban(group_id=ctx['group_id'], user_id=free_id, duration=0)
-
 
 # 进群欢迎语
 @bot.on_notice('group_increase')
 def handle_group_increase(context):
-    bot.send(context, message='为大家捕捉到一个网瘾少年,大家快来欢(tiao)迎(jiao)他吧 @%s' % ctx['sender']['nickname'], auto_escape=True)
+    bot.send(context, message='为大家捕捉到一个网瘾少年,大家快来欢(tiao)迎(jiao)他吧 @%s' % context['sender']['nickname'], auto_escape=True)
 
 
 # 私聊调用
@@ -382,6 +398,5 @@ def handle_msg_self(ctx):
             free_group_id = int(re.match(r'^free\s+(\d{6,10})\s+(\d{6,10})', msg).group(1))
             free_other_id = int(re.match(r'^free\s+(\d{6,10})\s+(\d{6,10})', msg).group(2))
             bot.set_group_ban(group_id=free_group_id, user_id=free_other_id, duration=0)
-
 
 bot.run('127.0.0.1', 8080)
