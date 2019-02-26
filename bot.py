@@ -8,20 +8,27 @@ from pprint import pprint
 
 from cqhttp import CQHttp
 
-trace_str = ''
-
-bot = CQHttp(api_root='http://127.0.0.1:5700')
-repeat_times = [0, 0, 0]
-list_id = [[], [], []]
-lesson_list = ['没课', '周一:\n一二节: 大学物理B(1)-三江楼605\n三四节: 线性代数-三江楼504\n五六节: 高等数学A(II)-三江401', '周二:\n'
-               '一二节: 大学英语(II)-主楼503\n三四节: 大学体育(基础)(II)', '周三:\n一二节: 大学物理\n三四节: 中国近代史纲要-三江404\n七八节: 高等数学A(II)-三江楼401',
-               '周四:\n一二节: 大学物理B(1)-三江楼605\n三四节: 高等数学A(II)-三江401\n五六节: 线性代数-三江楼504',
-               '周五:\n一二节: 面向对象程序设计A-三江楼411\n三四节: 中国近代史纲要-三江404', '没课']
-
 # 分群组记录复读和上次消息消息和群员昵称
 list_group_nickname = [[], [], []]
 list_group_id = [391539696, 649092523, 680753147]
 list_group_msg = ["", "", ""]
+# 初始复读次数都为0
+repeat_times = [0, 0, 0]
+# 记录下各个群的复读id
+list_id = [[], [], []]
+
+trace_str = ''
+
+bot = CQHttp(api_root='http://127.0.0.1:5700')
+
+lesson_list = ['QAQ今天没课哦,请选择C# PHP jacascript中的一门进行学习哦', '周一:\n一二节: 大学物理B(1)-三江楼605\n三四节: 线性代数(1-8周)-三江楼504\n五六节: 高等数学A(II)-三江楼401', '周二:\n'
+               'QAQ今天没课哦', '周三:\n一二节: 大学物理\n三四节: '
+               '中国近代史纲要-三江404\n七八节: 高等数学A(II)-三江楼401\n晚上: 企业知识产权协同战略(校选-3-15周)-三山楼306',
+               '周四:\n一二节: 大学物理B(1)-三江楼605\n三四节: 高等数学A(II)-三江401\n五六节: 线性代数(1-8周)-三江楼504\n'
+               '七八节: 玉器鉴赏(校选3-14周)-三山楼305',
+               '周五:\n一二节: 面向对象程序设计A-三江楼411\n三四节: 中国近代史纲要-三江404', 'QAQ今天没课哦', 'QAQ今天没课哦']
+
+
 
 # 定义定时函数
 def loop():
@@ -36,7 +43,7 @@ def loop():
     wait_time = wait_hour*3600 - local_min*60 - local_second
     time.sleep(wait_time)
     while True:
-        bot.send_private_msg(user_id=1821726849, message='早哇QAQ,今天打算做什么呢,要尽早规划好哦')
+        bot.send_private_msg(user_id=1821726849, message='早哇QAQ,今天的任务是任选PHP C# Javascript学习半小时, 课时作业也要按时完成哦')
         time.sleep(36000)
         bot.send_private_msg(user_id=1821726849, message='晚上好喵,今天的规划都完成了吗?')
         time.sleep(50400)
@@ -110,7 +117,7 @@ def handle_msg(ctx):
 
         reply += f'相似度: {similarity}\n图片直链: {img_link}\ntitle: {title}\npixiv_id: {pixiv_id}\nauthor: {author}'
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
-     #以图搜本
+     # 以图搜本
     if msg.startswith('以图搜本'):
         img_url = re.search(r'url=(.*)', msg).group(1)
         FORMAT_URL = 'https://saucenao.com/search.php?db=999&output_type=2&testmode=1&numres=16&url={}'
@@ -192,7 +199,7 @@ def handle_msg(ctx):
     #豆瓣搜书
     if msg.startswith('搜书'):
         #提取书名
-        keyword = re.match(r'搜书\s*(.+)', msg).groups(1)
+        keyword = re.match(r'搜书\s*(.+)', msg).group(1)
         #构造url
         url = 'https://api.douban.com/v2/book/search?q={}'.format(keyword)
 
@@ -233,7 +240,7 @@ def handle_msg(ctx):
 
         res = json.loads(r.content)
 
-        reply = '目前前十热映电影(数据来源豆瓣)\n'
+        reply = '目前前十即将上映电影(数据来源豆瓣)\n'
         data = res['subjects']
         # 提取内容
         for item in data:
@@ -277,16 +284,21 @@ def handle_msg(ctx):
         print(reply)
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
     # 课程表
-    if msg == '课程表':
+    if msg.startswith('课程表') and ctx['user_id'] == 1821726849:
         a = time.localtime()
-        b = int(time.strftime('%w', a))
+        if msg == '课程表':
+            b = int(time.strftime('%w', a))
+        else:
+            b = int(re.match(r'课程表\s*(\d)', msg).group(1))
         bot.send_group_msg(group_id=ctx['group_id'], message=lesson_list[b])
 
-
     # 复读检测
+    # 获取消息群组id
+    repeat_group_id = ctx['group_id']
+    group_pos_id = list_group_id.index(repeat_group_id)  # 获取群组id在创建的列表的位置
     if repeat_times[group_pos_id] == 0:
         list_group_msg[group_pos_id] = msg
-        repeat_id = ctx['user_id']
+        # repeat_id = ctx['user_id']
         # 单人复读注释掉下面这几句
         # repeat_times[group_pos_id] += 1
         # list_id[group_pos_id].append(ctx['user_id'])
@@ -296,12 +308,12 @@ def handle_msg(ctx):
         repeat_times[group_pos_id] += 1
         list_id[group_pos_id].append(ctx['user_id'])
         list_group_nickname[group_pos_id].append(ctx['sender']['nickname'])
-        repeat_id = ctx['user_id']
+        # repeat_id = ctx['user_id']
 
     if msg != list_group_msg[group_pos_id]:
         repeat_times[group_pos_id] = 1
         list_group_msg[group_pos_id] = msg
-        repeat_id = ctx['user_id']
+        # repeat_id = ctx['user_id']
 
         # 重置记录的群员名单,qq号
         list_group_nickname[group_pos_id].clear()
