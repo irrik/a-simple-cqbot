@@ -116,7 +116,7 @@ def handle_msg(ctx):
     # 搜图
     if msg.startswith('搜图'):
         img_url = re.search(r'url=(.*)', msg).group(1)
-        FORMAT_URL = 'https://saucenao.com/search.php?db=999&output_type=2&testmode=1&numres=16&url={}'
+        FORMAT_URL = 'https://saucenao.com/search.php?db=6&output_type=2&testmode=1&numres=16&url={}'
         url = FORMAT_URL.format(img_url)
 
         r = requests.get(url)
@@ -124,8 +124,8 @@ def handle_msg(ctx):
 
         reply = '搜图结果为:\n'
 
-        similarity = res['results'][0]['header']['similarity']
-        if float(similarity) < 70:
+        # similarity = res['results'][0]['header']['similarity']
+        if res['results'] == None:
             bot.send_group_msg(group_id=ctx['group_id'], message='在Pixiv没有找到相应的内容哦QAQ,由于只收录了Pixiv接口,咱无能为力呢')
             return
         img_link = res['results'][0]['data'].get('ext_urls','暂无相关信息')
@@ -133,7 +133,7 @@ def handle_msg(ctx):
         pixiv_id = res['results'][0]['data'].get('pixiv_id', '暂无相关信息')
         author = res['results'][0]['data'].get('member_name','暂无相关信息')
 
-        reply += f'相似度: {similarity}\n图片直链: {img_link}\ntitle: {title}\npixiv_id: {pixiv_id}\nauthor: {author}'
+        reply += f'图片直链: {img_link}\ntitle: {title}\npixiv_id: {pixiv_id}\nauthor: {author}'
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
      # 以图搜本
     if msg.startswith('以图搜本'):
