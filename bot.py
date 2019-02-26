@@ -44,20 +44,24 @@ def loop():
     local_min = local_time[4]
     local_second = local_time[5]
     wait_time = wait_hour*3600 - local_min*60 - local_second
+    print(wait_time)
     time.sleep(wait_time)
     while True:
         local_time2 = time.localtime(time.time())
         if local_time2[3] == 8:
             bot.send_private_msg(user_id=1821726849, message='早哇QAQ,今天的任务是任选PHP C# Javascript学习半小时, 课时作业也要按时完成哦')
             time.sleep(36000) #下午六点发送消息
+        local_time2 = time.localtime(time.time())
         if local_time2[3] == 18:
             bot.send_private_msg(user_id=1821726849, message='晚上好喵,今天的规划都完成了吗?')
             time.sleep(25200) #晚上一点全群组禁言
+        local_time2 = time.localtime(time.time())
         if local_time2[3] == 1:
             bot.set_group_whole_ban(group_id=391539696, enable=True)
             time.sleep(21600) # 早上七点发送每日课表,解封群组
         time_sub = time.localtime()
         day_is = int(time.strftime('%w', time_sub))
+        local_time2 = time.localtime(time.time())
         if local_time2[3] == 7:
             bot.send_private_msg(user_id=1821726849, message=lesson_list[day_is])
             bot.set_group_whole_ban(group_id=391539696, enable=False) # 解封全员禁言
