@@ -9,13 +9,13 @@ from pprint import pprint
 from cqhttp import CQHttp
 
 # 分群组记录复读和上次消息消息和群员昵称
-list_group_nickname = [[], [], []]
-list_group_id = [391539696, 649092523, 680753147]
-list_group_msg = ["", "", ""]
+list_group_nickname = [[], [], [], []]
+list_group_id = [391539696, 649092523, 680753147, 613235799]
+list_group_msg = ["", "", "", ""]
 # 初始复读次数都为0
-repeat_times = [0, 0, 0]
+repeat_times = [0, 0, 0, 0]
 # 记录下各个群的复读id
-list_id = [[], [], []]
+list_id = [[], [], [], []]
 
 trace_str = ''
 
@@ -28,26 +28,40 @@ lesson_list = ['QAQ今天没课哦,请选择C# PHP jacascript中的一门进行�
                '七八节: 玉器鉴赏(校选3-14周)-三山楼305',
                '周五:\n一二节: 面向对象程序设计A-三江楼411\n三四节: 中国近代史纲要-三江404', 'QAQ今天没课哦', 'QAQ今天没课哦']
 
-
-
 # 定义定时函数
 def loop():
     local_time = time.localtime(time.time())
     local_hour = local_time[3]
-    if local_hour > 8:
-        wait_hour = 24-local_hour+8
+    if 8 <= local_hour < 18 :
+        wait_hour = 18-local_hour
+    elif local_hour >= 18:
+        wait_hour = 25 - local_hour
+    elif 1 <= local_hour < 7:
+        wait_hour = 7 - local_hour
     else:
-        wait_hour = 8-local_hour
+        wait_hour = 1
+
     local_min = local_time[4]
     local_second = local_time[5]
     wait_time = wait_hour*3600 - local_min*60 - local_second
     time.sleep(wait_time)
     while True:
-        bot.send_private_msg(user_id=1821726849, message='早哇QAQ,今天的任务是任选PHP C# Javascript学习半小时, 课时作业也要按时完成哦')
-        time.sleep(36000)
-        bot.send_private_msg(user_id=1821726849, message='晚上好喵,今天的规划都完成了吗?')
-        time.sleep(50400)
-
+        local_time2 = time.localtime(time.time())
+        if local_time2[3] == 8:
+            bot.send_private_msg(user_id=1821726849, message='早哇QAQ,今天的任务是任选PHP C# Javascript学习半小时, 课时作业也要按时完成哦')
+            time.sleep(36000) #下午六点发送消息
+        if local_time2[3] == 18:
+            bot.send_private_msg(user_id=1821726849, message='晚上好喵,今天的规划都完成了吗?')
+            time.sleep(25200) #晚上一点全群组禁言
+        if local_time2[3] == 1:
+            bot.set_group_whole_ban(group_id=391539696, enable=True)
+            time.sleep(21600) # 早上七点发送每日课表,解封群组
+        time_sub = time.localtime()
+        day_is = int(time.strftime('%w', time_sub))
+        if local_time2[3] == 7:
+            bot.send_private_msg(user_id=1821726849, message=lesson_list[day_is])
+            bot.set_group_whole_ban(group_id=391539696, enable=False) # 解封全员禁言
+            time.sleep(3600)
 
 # 定义下载图片函数
 def save_img(img_url, file_name, file_path='book'):
@@ -107,7 +121,7 @@ def handle_msg(ctx):
         reply = '搜图结果为:\n'
 
         similarity = res['results'][0]['header']['similarity']
-        if float(similarity) < 75:
+        if float(similarity) < 70:
             bot.send_group_msg(group_id=ctx['group_id'], message='在Pixiv没有找到相应的内容哦QAQ,由于只收录了Pixiv接口,咱无能为力呢')
             return
         img_link = res['results'][0]['data'].get('ext_urls','暂无相关信息')
