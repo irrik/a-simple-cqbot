@@ -1,4 +1,4 @@
-import random, time, threading
+import random, time, threading, datetime
 
 from urllib.request import urlretrieve
 
@@ -22,9 +22,9 @@ trace_str = ''
 bot = CQHttp(api_root='http://127.0.0.1:5700')
 
 lesson_list = ['QAQ今天没课哦,请选择C# PHP jacascript中的一门进行学习哦', '周一:\n一二节: 大学物理B(1)-三江楼605\n三四节: 线性代数(1-8周)-三江楼504\n五六节: 高等数学A(II)-三江楼401', '周二:\n'
-               'QAQ今天没课哦', '周三:\n一二节: 大学物理\n三四节: '
+               'QAQ今天没课哦', '周三:\n一二节: 大学物理实验(物理实验楼)-(2-16周)\n三四节: '
                '中国近代史纲要-三江404\n七八节: 高等数学A(II)-三江楼401\n晚上: 企业知识产权协同战略(校选-3-15周)-三山楼306',
-               '周四:\n一二节: 大学物理B(1)-三江楼605\n三四节: 高等数学A(II)-三江401\n五六节: 线性代数(1-8周)-三江楼504\n'
+               '周四:\n一二节: 大学物理B(1)-三江楼605-(2-16周-双周课)\n三四节: 高等数学A(II)-三江401\n五六节: 线性代数(1-8周)-三江楼504\n'
                '七八节: 玉器鉴赏(校选3-14周)-三山楼305',
                '周五:\n一二节: 面向对象程序设计A-三江楼411\n三四节: 中国近代史纲要-三江404', 'QAQ今天没课哦', 'QAQ今天没课哦']
 
@@ -60,11 +60,16 @@ def loop():
             bot.set_group_whole_ban(group_id=391539696, enable=True)
             time.sleep(21600) # 早上七点发送每日课表,解封群组
         time_sub = time.localtime()
+        # 获取今天周几
         day_is = int(time.strftime('%w', time_sub))
+        # 获取今天第几周
+        fortnight = datetime.datetime.now().isocalendar()[1] - 8
+        reply = '第{}周,'.format(fortnight) + lesson_list[day_is]
         local_time2 = time.localtime(time.time())
         if local_time2[3] == 7:
-            bot.send_private_msg(user_id=1821726849, message=lesson_list[day_is])
-            bot.set_group_whole_ban(group_id=391539696, enable=False) # 解封全员禁言
+            bot.send_private_msg(user_id=1821726849, message=reply)
+            # 解封全员禁言
+            bot.set_group_whole_ban(group_id=391539696, enable=False)
             time.sleep(3600)
 
 # 定义下载图片函数
@@ -303,12 +308,14 @@ def handle_msg(ctx):
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
     # 课程表
     if msg.startswith('课程表') and ctx['user_id'] == 1821726849:
+        fortnight = datetime.datetime.now().isocalendar()[1] - 8
         a = time.localtime()
         if msg == '课程表':
             b = int(time.strftime('%w', a))
         else:
             b = int(re.match(r'课程表\s*(\d)', msg).group(1))
-        bot.send_group_msg(group_id=ctx['group_id'], message=lesson_list[b])
+        reply = '第{}周,'.format(fortnight) + lesson_list[b]
+        bot.send_group_msg(group_id=ctx['group_id'], message=reply)
 
     # 复读检测
     # 获取消息群组id
