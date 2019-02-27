@@ -133,10 +133,14 @@ def handle_msg(ctx):
         if res['results'] == None:
             bot.send_group_msg(group_id=ctx['group_id'], message='在Pixiv没有找到相应的内容哦QAQ,由于只收录了Pixiv接口,咱无能为力呢')
             return
-        img_link = res['results'][0]['data'].get('ext_urls','暂无相关信息')
-        title = res['results'][0]['data'].get('title','暂无相关信息')
         pixiv_id = res['results'][0]['data'].get('pixiv_id', '暂无相关信息')
-        author = res['results'][0]['data'].get('member_name','暂无相关信息')
+        r_exist = json.loads(requests.get('https://api.imjad.cn/pixiv/v2/?type=illust&id={}'.format(pixiv_id)).content)
+        if r_exist.get('error') != None:
+            bot.send_group_msg(group_id=ctx['group_id'], message='点图姬找到了图片的信息,但是它已经被P站删除了')
+            return
+        img_link = res['results'][0]['data'].get('ext_urls', '暂无相关信息')
+        title = res['results'][0]['data'].get('title','暂无相关信息')
+        author = res['results'][0]['data'].get('member_name', '暂无相关信息')
 
         reply += f'图片直链: {img_link}\ntitle: {title}\npixiv_id: {pixiv_id}\nauthor: {author}'
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
@@ -185,8 +189,7 @@ def handle_msg(ctx):
             # pprint(result)
             what_min = int(result['docs'][0]['from'] // 60)
             what_sec = int(result['docs'][0]['from'] % 60)
-            anime_detail = 'name: ' + result['docs'][0][
-                'anime'] + '\nepisode: {0}, time: {1}min:{2}s\n' + '放送时间 {3}\n' + '相似度 百分之{4} '
+            anime_detail = 'name: ' + result['docs'][0]['anime'] + '\nepisode: {0}, time: {1}min:{2}s\n' + '放送时间 {3}\n' + '相似度 百分之{4} '
             anime_detail = anime_detail.format(result['docs'][0]['episode'], what_min, what_sec,
                                                result['docs'][0]['season'], int(result['docs'][0]['similarity'] * 100))
             os.remove(r'C:\Users\Administrator\Desktop\book\test.jpg')
