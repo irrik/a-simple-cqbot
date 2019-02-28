@@ -21,19 +21,22 @@ trace_str = ''
 
 bot = CQHttp(api_root='http://127.0.0.1:5700')
 
-lesson_list = ['QAQ今天没课哦,请选择C# PHP jacascript中的一门进行学习哦', '周一:\n一二节: 大学物理B(1)-三江楼605\n三四节: 线性代数(1-8周)-三江楼504\n五六节: 高等数学A(II)-三江楼401', '周二:\n'
-               'QAQ今天没课哦', '周三:\n一二节: 大学物理实验(物理实验楼)-(2-16周)\n三四节: '
+lesson_list = ['QAQ今天没课哦,请选择C# PHP jacascript中的一门进行学习哦',
+               '周一:\n一二节: 大学物理B(1)-三江楼605\n三四节: 线性代数(1-8周)-三江楼504\n五六节: 高等数学A(II)-三江楼401', '周二:\n'
+                                                                                           'QAQ今天没课哦',
+               '周三:\n一二节: 大学物理实验(物理实验楼)-(2-16周)\n三四节: '
                '中国近代史纲要-三江404\n七八节: 高等数学A(II)-三江楼401\n晚上: 企业知识产权协同战略(校选-3-15周)-三山楼306',
                '周四:\n一二节: 大学物理B(1)-三江楼605-(2-16周-双周课)\n三四节: 高等数学A(II)-三江401\n五六节: 线性代数(1-8周)-三江楼504\n'
                '七八节: 玉器鉴赏(校选3-14周)-三山楼305',
                '周五:\n一二节: 面向对象程序设计A-三江楼411\n三四节: 中国近代史纲要-三江404', 'QAQ今天没课哦', 'QAQ今天没课哦']
 
+
 # 定义定时函数
 def loop():
     local_time = time.localtime(time.time())
     local_hour = local_time[3]
-    if 8 <= local_hour < 18 :
-        wait_hour = 18-local_hour
+    if 8 <= local_hour < 18:
+        wait_hour = 18 - local_hour
     elif local_hour >= 18:
         wait_hour = 25 - local_hour
     elif 1 <= local_hour < 7:
@@ -43,22 +46,22 @@ def loop():
 
     local_min = local_time[4]
     local_second = local_time[5]
-    wait_time = wait_hour*3600 - local_min*60 - local_second
+    wait_time = wait_hour * 3600 - local_min * 60 - local_second
     print(wait_time)
     time.sleep(wait_time)
     while True:
         local_time2 = time.localtime(time.time())
         if local_time2[3] == 8:
             bot.send_private_msg(user_id=1821726849, message='早哇QAQ,今天的任务是任选PHP C# Javascript学习半小时, 课时作业也要按时完成哦')
-            time.sleep(36000) #下午六点发送消息
+            time.sleep(36000)  # 下午六点发送消息
         local_time2 = time.localtime(time.time())
         if local_time2[3] == 18:
             bot.send_private_msg(user_id=1821726849, message='晚上好喵,今天的规划都完成了吗?')
-            time.sleep(25200) #晚上一点全群组禁言
+            time.sleep(25200)  # 晚上一点全群组禁言
         local_time2 = time.localtime(time.time())
         if local_time2[3] == 1:
             bot.set_group_whole_ban(group_id=391539696, enable=True)
-            time.sleep(21600) # 早上七点发送每日课表,解封群组
+            time.sleep(21600)  # 早上七点发送每日课表,解封群组
         time_sub = time.localtime()
         # 获取今天周几
         day_is = int(time.strftime('%w', time_sub))
@@ -71,6 +74,7 @@ def loop():
             # 解封全员禁言
             bot.set_group_whole_ban(group_id=391539696, enable=False)
             time.sleep(3600)
+
 
 # 定义下载图片函数
 def save_img(img_url, file_name, file_path='book'):
@@ -93,9 +97,11 @@ def save_img(img_url, file_name, file_path='book'):
     except Exception as e:
         print('错误 ：', e)
 
+
 # 定义一个新的线程
 t = threading.Thread(target=loop, name='LoopThread')
 t.start()
+
 
 @bot.on_message('group')
 def handle_msg(ctx):
@@ -128,23 +134,25 @@ def handle_msg(ctx):
         res = json.loads(r.content)
 
         reply = '搜图结果为:\n'
-
-        # similarity = res['results'][0]['header']['similarity']
-        if res['results'] == None:
+        img_link = res['results'][0]['data'].get('ext_urls', '暂无相关信息')
+        title = res['results'][0]['data'].get('title', '暂无相关信息')
+        author = res['results'][0]['data'].get('member_name', '暂无相关信息')
+        similarity = res['results'][0]['header']['similarity']
+        pixiv_id = res['results'][0]['data'].get('pixiv_id', '暂无相关信息')
+        reply += f'图片直链: {img_link}\ntitle: {title}\npixiv_id: {pixiv_id}\nauthor: {author}'
+        if float(similarity) <= 45:
             bot.send_group_msg(group_id=ctx['group_id'], message='在Pixiv没有找到相应的内容哦QAQ,由于只收录了Pixiv接口,咱无能为力呢')
             return
-        pixiv_id = res['results'][0]['data'].get('pixiv_id', '暂无相关信息')
+       #  pixiv_id = res['results'][0]['data'].get('pixiv_id', '暂无相关信息')
         r_exist = json.loads(requests.get('https://api.imjad.cn/pixiv/v2/?type=illust&id={}'.format(pixiv_id)).content)
         if r_exist.get('error') != None:
-            bot.send_group_msg(group_id=ctx['group_id'], message='点图姬找到了图片的信息,但是它已经被P站删除了')
-            return
-        img_link = res['results'][0]['data'].get('ext_urls', '暂无相关信息')
-        title = res['results'][0]['data'].get('title','暂无相关信息')
-        author = res['results'][0]['data'].get('member_name', '暂无相关信息')
-
-        reply += f'图片直链: {img_link}\ntitle: {title}\npixiv_id: {pixiv_id}\nauthor: {author}'
+            if r_exist['error']['user_message'] != '':
+                bot.send_group_msg(group_id=ctx['group_id'], message='点图姬找到了图片的信息,但是它已经被P站删除了')
+                return
+            else:
+                bot.send_group_msg(group_id=ctx['group_id'], message=reply)
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
-     # 以图搜本
+    # 以图搜本
     if msg.startswith('以图搜本'):
         img_url = re.search(r'url=(.*)', msg).group(1)
         FORMAT_URL = 'https://saucenao.com/search.php?db=999&output_type=2&testmode=1&numres=16&url={}'
@@ -179,7 +187,7 @@ def handle_msg(ctx):
                 encodestr = base64.b64encode(data)
                 trace_str = str(encodestr, 'utf-8')
             # print(trace_str)
-            #os.remove(r'C:\Users\Administrator\Desktop\book\test.jpg')
+            # os.remove(r'C:\Users\Administrator\Desktop\book\test.jpg')
 
             # 调用api和整理返回结果
             d = {'image': trace_str}
@@ -189,7 +197,8 @@ def handle_msg(ctx):
             # pprint(result)
             what_min = int(result['docs'][0]['from'] // 60)
             what_sec = int(result['docs'][0]['from'] % 60)
-            anime_detail = 'name: ' + result['docs'][0]['anime'] + '\nepisode: {0}, time: {1}min:{2}s\n' + '放送时间 {3}\n' + '相似度 百分之{4} '
+            anime_detail = 'name: ' + result['docs'][0][
+                'anime'] + '\nepisode: {0}, time: {1}min:{2}s\n' + '放送时间 {3}\n' + '相似度 百分之{4} '
             anime_detail = anime_detail.format(result['docs'][0]['episode'], what_min, what_sec,
                                                result['docs'][0]['season'], int(result['docs'][0]['similarity'] * 100))
             os.remove(r'C:\Users\Administrator\Desktop\book\test.jpg')
@@ -200,7 +209,6 @@ def handle_msg(ctx):
         payload = {'address': city, 'tdsourcetag': 's_pcqq_aiomsg'}
         r = requests.get('https://api.imjad.cn/weather/v1/', params=payload)
         result = json.loads(r.content)
-        ##pprint(result)
         wea_msg = '{}, 最高温:{}摄氏度, 最低温:{}摄氏度, pm2.5最大值:{}, 平均风速：{}km/h，感冒易发程度:{}, 整体感觉:{}, {}'.format(
             result['result']['hourly']['description'], int(result['result']['daily']['temperature'][0]['max']),
             int(result['result']['daily']['temperature'][0]['min']), int(result['result']['daily']['pm25'][0]['max']),
@@ -221,16 +229,15 @@ def handle_msg(ctx):
             reply += f'\n{title}\n{url}'
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
 
-
-    #豆瓣搜书
+    # 豆瓣搜书
     if msg.startswith('搜书'):
-        #提取书名
+        # 提取书名
         keyword = re.match(r'搜书\s*(.+)', msg).group(1)
-        #构造url
+        # 构造url
         url = 'https://api.douban.com/v2/book/search?q={}'.format(keyword)
 
         r = requests.get(url)
-        #整理结果并且提取信息
+        # 整理结果并且提取信息
         res = json.loads(r.content)
         author = ','.join(res['books'][0]['author'])
         score = res['books'][0]['rating']['average']
@@ -242,10 +249,10 @@ def handle_msg(ctx):
         reply = f'author: {author}\n 价格: {price},豆瓣得分: {score}, 出版日期: {pubdate}\n标签: {book_tag}'
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
 
-    #豆瓣搜索电影
+    # 豆瓣搜索电影
     if msg.startswith('搜影'):
         keyword = re.match(r'搜影\s*(.+)', msg).groups(1)
-        #构造url
+        # 构造url
         url = 'https://api.douban.com/v2/movie/search?q={}'.format(keyword)
         r = requests.get(url)
         reply = ''
@@ -277,7 +284,7 @@ def handle_msg(ctx):
             reply += f'name: {title}\noriginal_name: {original_title}\n 豆瓣得分: {score}, 电影类型: {film_genres}\n'
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
 
-    #即将上映
+    # 即将上映
     if msg == '即将上映':
         r = requests.get('https://api.douban.com/v2/movie/coming_soon?start=0&count=10')
         # 获取返回
@@ -415,6 +422,7 @@ def handle_msg(ctx):
         free_id = int(re.match(r'^free.+qq=(\d{6,10})', msg).group(1))
         bot.set_group_ban(group_id=ctx['group_id'], user_id=free_id, duration=0)
 
+
 # 进群欢迎语
 @bot.on_notice('group_increase')
 def handle_group_increase(context):
@@ -438,5 +446,6 @@ def handle_msg_self(ctx):
             free_group_id = int(re.match(r'^free\s+(\d{6,10})\s+(\d{6,10})', msg).group(1))
             free_other_id = int(re.match(r'^free\s+(\d{6,10})\s+(\d{6,10})', msg).group(2))
             bot.set_group_ban(group_id=free_group_id, user_id=free_other_id, duration=0)
+
 
 bot.run('127.0.0.1', 8080)
