@@ -140,7 +140,7 @@ def handle_msg(ctx):
         similarity = res['results'][0]['header']['similarity']
         pixiv_id = res['results'][0]['data'].get('pixiv_id', '暂无相关信息')
         reply += f'图片直链: {img_link}\ntitle: {title}\npixiv_id: {pixiv_id}\nauthor: {author}'
-        if float(similarity) <= 45:
+        if float(similarity) <= 50:
             bot.send_group_msg(group_id=ctx['group_id'], message='在Pixiv没有找到相应的内容哦QAQ,由于只收录了Pixiv接口,咱无能为力呢')
             return
        #  pixiv_id = res['results'][0]['data'].get('pixiv_id', '暂无相关信息')
@@ -151,6 +151,7 @@ def handle_msg(ctx):
                 return
             else:
                 bot.send_group_msg(group_id=ctx['group_id'], message=reply)
+                return
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
     # 以图搜本
     if msg.startswith('以图搜本'):
@@ -226,7 +227,7 @@ def handle_msg(ctx):
         for story in data['stories']:
             url = STORY_URL_FORMAT.format(story['id'])
             title = story['title']
-            reply += f'\n{title}\n{url}'
+            reply += f'\n{title}\n{url}\n'
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
 
     # 豆瓣搜书
@@ -281,7 +282,7 @@ def handle_msg(ctx):
             score = item['rating']['average']
             film_genres = ','.join(item['genres'])
             original_title = item['original_title']
-            reply += f'name: {title}\noriginal_name: {original_title}\n 豆瓣得分: {score}, 电影类型: {film_genres}\n'
+            reply += f'name: {title}\noriginal_name: {original_title}\n 豆瓣得分: {score}, 电影类型: {film_genres}\n\n'
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
 
     # 即将上映
@@ -290,14 +291,14 @@ def handle_msg(ctx):
         # 获取返回
         res = json.loads(r.content)
 
-        reply = '目前前十热映电影(数据来源豆瓣)\n'
+        reply = '目前前十即将上映电影(数据来源豆瓣)\n'
         data = res['subjects']
         # 提取内容
         for item in data:
             title = item['title']
             film_genres = ','.join(item['genres'])
             original_title = item['original_title']
-            reply += f'name: {title}\noriginal_name: {original_title}\n电影类型: {film_genres}\n'
+            reply += f'name: {title}\noriginal_name: {original_title}\n电影类型: {film_genres}\n\n'
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
     # 番据索引
     if msg == '番剧索引':
@@ -313,9 +314,23 @@ def handle_msg(ctx):
             index_show = item['index_show']
             score = item['order']['score']
             link = item['link']
-            reply += f'\n{title},{play_time},{follow},{index_show},{score},{link}\n'
+            reply += f'\n{title},{play_time},{follow},{index_show},{score},{link}\n\n'
         print(reply)
         bot.send_group_msg(group_id=ctx['group_id'], message=reply)
+
+    # 番剧更新
+    if msg == '番剧更新':
+        r = requests.get('https://bangumi.bilibili.com/web_api/timeline_global')
+        data = json.loads(r.text)
+        reply = "今日更新番剧如下:\n"
+
+        for item in data['result'][6]['seasons']:
+            pub_time = item['pub_time']
+            pub_index = item['pub_index']
+            title = item['title']
+            reply += f'title: {title}, 更新至: {pub_index}, 更新时间: {pub_time}\n\n'
+        bot.send_group_msg(group_id=ctx['group_id'], message=reply)
+
     # 课程表
     if msg.startswith('课程表') and ctx['user_id'] == 1821726849:
         fortnight = datetime.datetime.now().isocalendar()[1] - 8
