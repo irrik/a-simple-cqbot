@@ -1,9 +1,9 @@
 from funtion import *
+import threading
 
-# 定义一个新的线程处理定时任务
+# 定义新的线程处理定时任务
 t = threading.Thread(target=loop, name='LoopThread')
 t.start()
-
 
 @bot.on_message('group')
 def handle_msg(ctx):
@@ -12,7 +12,7 @@ def handle_msg(ctx):
 
     # 一言
     if msg == "一言":
-        one_message(ctx)
+        bot.send_group_msg(group_id=ctx['group_id'], message=one_message())
 
     # 搜图
     if msg.startswith('搜图'):
@@ -28,7 +28,7 @@ def handle_msg(ctx):
         search_anime(ctx, msg)
 
     if re.search(r'(.+)天气$', msg):
-        search_weather(ctx, msg)
+        bot.send_group_msg(group_id=ctx['group_id'], message=search_weather(ctx, msg))
 
     # 知乎日报
     if msg == '知乎日报':

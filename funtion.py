@@ -1,4 +1,4 @@
-import random, time, threading, datetime
+import random, time, datetime
 
 from urllib.request import urlretrieve
 
@@ -60,13 +60,13 @@ def save_img(img_url, file_name, file_path='book'):
 """
 
 
-def one_message(ctx):
+def one_message():
     one_word_url = "https://api.imjad.cn/hitokoto/?cat=&charset=utf-8&length=50&encode=json&fun=sync&source="
     r = requests.get(one_word_url)
     result = json.loads(r.content)
     pprint(result)
     sentance = result['hitokoto'] + '-' + result['source']
-    bot.send_group_msg(group_id=ctx['group_id'], message=sentance)
+    return sentance
 
 
 def search_pic(ctx, msg):
@@ -151,7 +151,7 @@ def search_anime(ctx, msg):
         bot.send_group_msg(group_id=ctx['group_id'], message=anime_detail)
 
 
-def search_weather(ctx, msg):
+def search_weather(msg):
     city = re.search(r'(.+)天气$', msg).group(1)
     payload = {'address': city, 'tdsourcetag': 's_pcqq_aiomsg'}
     r = requests.get('https://api.imjad.cn/weather/v1/', params=payload)
@@ -161,7 +161,8 @@ def search_weather(ctx, msg):
         int(result['result']['daily']['temperature'][0]['min']), int(result['result']['daily']['pm25'][0]['max']),
         int(result['result']['daily']['wind'][0]['avg']['speed']), result['result']['daily']['coldRisk'][0]['desc'],
         result['result']['daily']['comfort'][0]['desc'], result['result']['forecast_keypoint'])
-    bot.send_group_msg(group_id=ctx['group_id'], message=wea_msg)
+    return wea_msg
+
 
 
 def zhihu_daily(ctx):
@@ -221,7 +222,7 @@ def search_hot_film(ctx):
 
     res = json.loads(r.content)
 
-    reply = '目前前十即将上映电影(数据来源豆瓣)\n'
+    reply = '目前前十热映电影(数据来源豆瓣)\n'
     data = res['subjects']
     # 提取内容
     for item in data:
@@ -386,6 +387,7 @@ def always_on(ctx, msg):
 
 # 定义定时函数
 def loop():
+    # 计算时间
     local_time = time.localtime(time.time())
     local_hour = local_time[3]
     if 8 <= local_hour < 18:
@@ -403,18 +405,7 @@ def loop():
     print(wait_time)
     time.sleep(wait_time)
     while True:
-        local_time2 = time.localtime(time.time())
-        if local_time2[3] == 8:
-            bot.send_private_msg(user_id=1821726849, message='早哇QAQ,今天的任务是任选PHP C# Javascript学习半小时, 课时作业也要按时完成哦')
-            time.sleep(36000)  # 下午六点发送消息
-        local_time2 = time.localtime(time.time())
-        if local_time2[3] == 18:
-            bot.send_private_msg(user_id=1821726849, message='晚上好喵,今天的规划都完成了吗?')
-            time.sleep(25200)  # 晚上一点全群组禁言
-        local_time2 = time.localtime(time.time())
-        if local_time2[3] == 1:
-            bot.set_group_whole_ban(group_id=391539696, enable=True)
-            time.sleep(21600)  # 早上七点发送每日课表,解封群组
+
         time_sub = time.localtime()
         # 获取今天周几
         day_is = int(time.strftime('%w', time_sub))
@@ -422,8 +413,47 @@ def loop():
         fortnight = datetime.datetime.now().isocalendar()[1] - 8
         reply = '第{}周,'.format(fortnight) + lesson_list[day_is]
         local_time2 = time.localtime(time.time())
+        if local_time2[3] == 8:
+            bot.send_private_msg(user_id=1821726849, message='早哇QAQ,今天的任务是任选PHP C# Javascript学习半小时, 课时作业也要按时完成哦')
+            if day_is in [1,3,4,5]:
+
+                time.sleep(6000)
+                bot.send_private_msg(user_id=1821726849, message=reply)
+                bot.send_private_msg(user_id=1821726849, message=one_message())
+                bot.send_private_msg(user_id=1821726849, message=search_weather('镇江天气'))
+                time.sleep(10800)
+                bot.send_private_msg(user_id=1821726849, message=reply)
+                bot.send_private_msg(user_id=1821726849, message=one_message())
+                bot.send_private_msg(user_id=1821726849, message=search_weather('镇江天气'))
+                time.sleep(9000)
+                bot.send_private_msg(user_id=1821726849, message=reply)
+                bot.send_private_msg(user_id=1821726849, message=one_message())
+                bot.send_private_msg(user_id=1821726849, message=search_weather('镇江天气'))
+                time.sleep(10200)
+            else:
+                time.sleep(36000)  # 下午六点发送消息
+                bot.send_private_msg(user_id=1821726849, message=search_weather('镇江天气'))
+        local_time2 = time.localtime(time.time())
+        if local_time2[3] == 18:
+            bot.send_private_msg(user_id=1821726849, message='晚上好喵,今天的规划都完成了吗?')
+            bot.send_private_msg(user_id=1821726849, message=one_message())
+            time.sleep(25200)  # 晚上一点全群组禁言
+        local_time2 = time.localtime(time.time())
+        if local_time2[3] == 1:
+            bot.set_group_whole_ban(group_id=391539696, enable=True)
+            time.sleep(21600)  # 早上七点发送每日课表,解封群组
+        # time_sub = time.localtime()
+        # # 获取今天周几
+        # day_is = int(time.strftime('%w', time_sub))
+        # # 获取今天第几周
+        # fortnight = datetime.datetime.now().isocalendar()[1] - 8
+        # reply = '第{}周,'.format(fortnight) + lesson_list[day_is]
+        local_time2 = time.localtime(time.time())
         if local_time2[3] == 7:
             bot.send_private_msg(user_id=1821726849, message=reply)
             # 解封全员禁言
             bot.set_group_whole_ban(group_id=391539696, enable=False)
             time.sleep(3600)
+
+
+
