@@ -1,7 +1,7 @@
-import random, time, datetime
+import random, time, datetime, urllib
 
 from urllib.request import urlretrieve
-
+from bs4 import BeautifulSoup
 import re, requests, json, os, base64
 
 from pprint import pprint
@@ -292,6 +292,28 @@ def daily_lesson(ctx, msg):
     bot.send_group_msg(group_id=ctx['group_id'], message=reply)
 
 
+def hot_topic():
+    target = "https://s.weibo.com/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36"}
+    r = requests.get(url='https://s.weibo.com/top/summary?cate=realtimehot', headers=headers)
+    # r.encoding=('utf-8')
+    data = BeautifulSoup(r.text)
+    tb = data.find('tbody')
+    af = BeautifulSoup(str(tb))
+    link_name = BeautifulSoup(str(tb)).find_all('a')
+    reply = "微博热搜top及前十如下:\n"
+    for i in range(0, 11):
+        if re.search(r'/weibo\?q=(.*)&', link_name[i].get('href')):
+            print(re.search(r'/weibo\?q=(.*)&', link_name[i].get('href')).group(1))
+            reply += urllib.parse.unquote(re.search(r'/weibo\?q=(.*)&', link_name[i].get('href')).group(1)) + '\n'
+        else:
+            reply += "暂时无法获取内容\n"
+        reply += target + link_name[i].get('href') + '\n'
+    # print(reply)
+    return reply
+
+
 def always_on(ctx, msg):
     # 复读检测
     # repeat_group_id = ctx['group_id']
@@ -406,13 +428,23 @@ def loop():
     time.sleep(wait_time)
     while True:
 
+
         time_sub = time.localtime()
         # 获取今天周几
         day_is = int(time.strftime('%w', time_sub))
         # 获取今天第几周
         fortnight = datetime.datetime.now().isocalendar()[1] - 8
         reply = '第{}周,'.format(fortnight) + lesson_list[day_is]
+
         local_time2 = time.localtime(time.time())
+        if local_time2[3] == 7:
+            bot.send_private_msg(user_id=1821726849, message=reply)
+            bot.send_private_msg(user_id=1821726849, message=one_message())
+            bot.send_private_msg(user_id=1821726849, message=search_weather('镇江天气'))
+            # 解封全员禁言
+            bot.set_group_whole_ban(group_id=391539696, enable=False)
+            time.sleep(3600)
+
         if local_time2[3] == 8:
             bot.send_private_msg(user_id=1821726849, message='早哇QAQ,今天的任务是任选PHP C# Javascript学习半小时, 课时作业也要按时完成哦')
             if day_is in [1,3,4,5]:
@@ -442,18 +474,6 @@ def loop():
         if local_time2[3] == 1:
             bot.set_group_whole_ban(group_id=391539696, enable=True)
             time.sleep(21600)  # 早上七点发送每日课表,解封群组
-        # time_sub = time.localtime()
-        # # 获取今天周几
-        # day_is = int(time.strftime('%w', time_sub))
-        # # 获取今天第几周
-        # fortnight = datetime.datetime.now().isocalendar()[1] - 8
-        # reply = '第{}周,'.format(fortnight) + lesson_list[day_is]
-        local_time2 = time.localtime(time.time())
-        if local_time2[3] == 7:
-            bot.send_private_msg(user_id=1821726849, message=reply)
-            # 解封全员禁言
-            bot.set_group_whole_ban(group_id=391539696, enable=False)
-            time.sleep(3600)
 
 
 

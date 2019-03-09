@@ -28,7 +28,7 @@ def handle_msg(ctx):
         search_anime(ctx, msg)
 
     if re.search(r'(.+)天气$', msg):
-        bot.send_group_msg(group_id=ctx['group_id'], message=search_weather(ctx, msg))
+        bot.send_group_msg(group_id=ctx['group_id'], message=search_weather(msg))
 
     # 知乎日报
     if msg == '知乎日报':
@@ -63,7 +63,16 @@ def handle_msg(ctx):
     # 课程表
     if msg.startswith('课程表') and ctx['user_id'] == 1821726849:
         daily_lesson(ctx, msg)
+
+
+    # 微博热搜
+    if msg == "微博热搜":
+        bot.send_group_msg(group_id=ctx['group_id'], message=hot_topic())
+
+
+
     always_on(ctx, msg)
+
 
 
 # 私聊调用
