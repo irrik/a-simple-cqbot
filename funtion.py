@@ -145,38 +145,39 @@ def search_anime(ctx, msg):
         # print(img_url)
         save_img(img_url, 'test', file_path)
         flag = 1
+    try:
+        if flag:
+            # 将图片转成base64编码保存到trace_str变量中
+            with open(r'C:\Users\Administrator\Desktop\book\test.png', 'rb') as f:
+                global trace_str
+                data = f.read()
+                encodestr = base64.b64encode(data)
+                trace_str = str(encodestr, 'utf-8')
+            # print(trace_str)
+            # os.remove(r'C:\Users\Administrator\Desktop\book\test.jpg')
 
-    if flag:
-        # 将图片转成base64编码保存到trace_str变量中
-        with open(r'C:\Users\Administrator\Desktop\book\test.png', 'rb') as f:
-            global trace_str
-            data = f.read()
-            encodestr = base64.b64encode(data)
-            trace_str = str(encodestr, 'utf-8')
-        # print(trace_str)
-        # os.remove(r'C:\Users\Administrator\Desktop\book\test.jpg')
+            # 调用api和整理返回结果
+            d = {'image': trace_str}
+            s = json.dumps(d)
+            r = requests.post('https://trace.moe/api/search', data=s)
+            result = json.loads(r.content)
+            # pprint(result)
+            what_min = int(result['docs'][0]['from'] // 60)
+            what_sec = int(result['docs'][0]['from'] % 60)
+            anime_detail = 'name: ' + result['docs'][0][
+                'anime'] + '\nepisode: {0}, time: {1}min:{2}s\n' + '放送时间 {3}\n' + '相似度 百分之{4} '
+            anime_detail = anime_detail.format(result['docs'][0]['episode'], what_min, what_sec,
+                                               result['docs'][0]['season'], int(result['docs'][0]['similarity'] * 100))
 
-        # 调用api和整理返回结果
-        d = {'image': trace_str}
-        s = json.dumps(d)
-        r = requests.post('https://trace.moe/api/search', data=s)
-        result = json.loads(r.content)
-        # pprint(result)
-        what_min = int(result['docs'][0]['from'] // 60)
-        what_sec = int(result['docs'][0]['from'] % 60)
-        anime_detail = 'name: ' + result['docs'][0][
-            'anime'] + '\nepisode: {0}, time: {1}min:{2}s\n' + '放送时间 {3}\n' + '相似度 百分之{4} '
-        anime_detail = anime_detail.format(result['docs'][0]['episode'], what_min, what_sec,
-                                           result['docs'][0]['season'], int(result['docs'][0]['similarity'] * 100))
-
+            bot.send_group_msg(group_id=ctx['group_id'], message=anime_detail)
+    except json.decoder.JSONDecodeError:
+        bot.send_group_msg(group_id=ctx['group_id'], message="gif不能使用手机转发搜图(没错pc可以,被识别成了jpg惹,请尝试保存到手机再重新发出")
+    finally:
         # delete gif
         if re.search(r"gif", msg):
             os.remove(r'C:\Users\Administrator\Desktop\book\test.gif')
         os.remove(r'C:\Users\Administrator\Desktop\book\test.png')
         flag = 0
-        bot.send_group_msg(group_id=ctx['group_id'], message=anime_detail)
-
-
 def search_weather(msg):
     city = re.search(r'(.+)天气$', msg).group(1)
     payload = {'address': city, 'tdsourcetag': 's_pcqq_aiomsg'}
