@@ -1,5 +1,5 @@
 import random, time, datetime, urllib
-
+from PIL import Image
 from urllib.request import urlretrieve
 from bs4 import BeautifulSoup
 import re, requests, json, os, base64
@@ -46,7 +46,7 @@ def save_img(img_url, file_name, file_path='book'):
         # file_suffix = os.path.splitext(img_url)[1]
 
         # 拼接图片名（包含路径）
-        filename = '{}{}{}{}'.format(file_path, os.sep, file_name, '.jpg')
+        filename = '{}{}{}{}'.format(file_path, os.sep, file_name, '.png')
         # 下载图片，并保存到文件夹中
         urlretrieve(img_url, filename=filename)
     except IOError as e:
@@ -84,6 +84,7 @@ def search_pic(ctx, msg):
     author = res['results'][0]['data'].get('member_name', '暂无相关信息')
     similarity = res['results'][0]['header']['similarity']
     pixiv_id = res['results'][0]['data'].get('pixiv_id', '暂无相关信息')
+    print(similarity)
     reply += f'图片直链: {img_link}\ntitle: {title}\npixiv_id: {pixiv_id}\nauthor: {author}'
     if float(similarity) <= 50:
         bot.send_group_msg(group_id=ctx['group_id'], message='在Pixiv没有找到相应的内容哦QAQ,由于只收录了Pixiv接口,咱无能为力呢')
@@ -120,15 +121,34 @@ def search_hbook(ctx, msg):
 
 
 def search_anime(ctx, msg):
-    if re.search(r'url=', msg):
+    # add gif search
+    if re.search(r"gif", msg):
+        img_url = re.search(r'url=(.*)', msg).group(1)
+        r = requests.get(img_url)
+        with open(r'C:\Users\Administrator\Desktop\book\test.gif', 'wb') as f:
+            f.write(r.content)
+
+        im = Image.open(r'C:\Users\Administrator\Desktop\book\test.gif')
+        try:
+            current = im.tell()
+            im.save(r'C:\Users\Administrator\Desktop\book' + '/' + "test" + ".png")
+        except EOFError:
+            pass
+        im.close()
+        flag = 1
+
+
+    elif re.search(r'url=', msg):
         # pic_url = re.search(r'url=(.*)', msg).group(1)
         file_path = r'C:\Users\Administrator\Desktop\book'
         img_url = re.search(r'url=(.*)', msg).group(1)
-        print(img_url)
+        # print(img_url)
         save_img(img_url, 'test', file_path)
+        flag = 1
 
+    if flag:
         # 将图片转成base64编码保存到trace_str变量中
-        with open(r'C:\Users\Administrator\Desktop\book\test.jpg', 'rb') as f:
+        with open(r'C:\Users\Administrator\Desktop\book\test.png', 'rb') as f:
             global trace_str
             data = f.read()
             encodestr = base64.b64encode(data)
@@ -148,7 +168,12 @@ def search_anime(ctx, msg):
             'anime'] + '\nepisode: {0}, time: {1}min:{2}s\n' + '放送时间 {3}\n' + '相似度 百分之{4} '
         anime_detail = anime_detail.format(result['docs'][0]['episode'], what_min, what_sec,
                                            result['docs'][0]['season'], int(result['docs'][0]['similarity'] * 100))
-        os.remove(r'C:\Users\Administrator\Desktop\book\test.jpg')
+
+        # delete gif
+        if re.search(r"gif", msg):
+            os.remove(r'C:\Users\Administrator\Desktop\book\test.gif')
+        os.remove(r'C:\Users\Administrator\Desktop\book\test.png')
+        flag = 0
         bot.send_group_msg(group_id=ctx['group_id'], message=anime_detail)
 
 
@@ -303,14 +328,14 @@ def hot_topic():
     tb = data.find('tbody')
     af = BeautifulSoup(str(tb))
     link_name = BeautifulSoup(str(tb)).find_all('a')
-    reply = "微博热搜top及前十如下:\n"
-    for i in range(0, 11):
+    reply = "微博热搜top及前9如下:\n"
+    for i in range(0, 9):
         if re.search(r'/weibo\?q=(.*)&', link_name[i].get('href')):
             print(re.search(r'/weibo\?q=(.*)&', link_name[i].get('href')).group(1))
-            reply += urllib.parse.unquote(re.search(r'/weibo\?q=(.*)&', link_name[i].get('href')).group(1)) + '\n'
+            reply += urllib.parse.unquote(re.search(r'/weibo\?q=(.*)&', link_name[i].get('href')).group(1)) + '\n\n'
         else:
             reply += "暂时无法获取内容\n"
-        reply += target + link_name[i].get('href') + '\n'
+        reply += target + link_name[i].get('href') + '\n\n'
     # print(reply)
     return reply
 

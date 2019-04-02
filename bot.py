@@ -5,6 +5,7 @@ import threading
 t = threading.Thread(target=loop, name='LoopThread')
 t.start()
 
+
 @bot.on_message('group')
 def handle_msg(ctx):
     pprint(ctx)
