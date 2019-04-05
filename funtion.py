@@ -11,7 +11,7 @@ bot = CQHttp(api_root='http://127.0.0.1:5700')
 
 # 分群组记录复读和上次消息消息和群员昵称
 list_group_nickname = [[], [], [], []]
-list_group_id = [391539696, 649092523, 680753147, 613235799]
+list_group_id = [391539696, 649092523, 706404659]
 list_group_msg = ["", "", "", ""]
 # 初始复读次数都为0
 repeat_times = [0, 0, 0, 0]
@@ -93,7 +93,8 @@ def search_pic(ctx, msg):
     r_exist = json.loads(requests.get('https://api.imjad.cn/pixiv/v2/?type=illust&id={}'.format(pixiv_id)).content)
     if r_exist.get('error') != None:
         if r_exist['error']['user_message'] != '':
-            bot.send_group_msg(group_id=ctx['group_id'], message='点图姬找到了图片的信息,但是它已经被P站删除了')
+            reply = '点图姬找到了图片的信息,但是它已经被P站删除了\n' + reply
+            bot.send_group_msg(group_id=ctx['group_id'], message=reply)
             return
         else:
             bot.send_group_msg(group_id=ctx['group_id'], message=reply)
@@ -136,7 +137,6 @@ def search_anime(ctx, msg):
             pass
         im.close()
         flag = 1
-
 
     elif re.search(r'url=', msg):
         # pic_url = re.search(r'url=(.*)', msg).group(1)
@@ -339,6 +339,26 @@ def hot_topic():
         reply += target + link_name[i].get('href') + '\n\n'
     # print(reply)
     return reply
+
+
+def recordMsg(ctx):
+    recordMessage = re.match(r'^记录(.*)',ctx['message']).group(1)
+    path = r'./{}.txt'.format(ctx['user_id'])
+    with open(path, 'a') as f:
+        f.write(recordMessage)
+        f.write('\n')
+
+
+def repeatMsg(ctx):
+    path = r'./{}.txt'.format(ctx['user_id'])
+    with open(path, 'r') as f:
+        bot.send_private_msg(user_id=ctx['user_id'], message=f.read())
+
+
+def reSet(ctx):
+    path = r'./{}.txt'.format(ctx['user_id'])
+    with open(path, 'w') as f:
+        pass
 
 
 def always_on(ctx, msg):

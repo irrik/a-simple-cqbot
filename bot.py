@@ -94,5 +94,13 @@ def handle_msg_self(ctx):
             free_other_id = int(re.match(r'^free\s+(\d{6,10})\s+(\d{6,10})', msg).group(2))
             bot.set_group_ban(group_id=free_group_id, user_id=free_other_id, duration=0)
 
+    if msg.startswith('记录'):
+        recordMsg(ctx)
+
+    if msg.startswith("知识点"):
+        repeatMsg(ctx)
+
+    if msg.startswith('清空'):
+        reSet(ctx)
 
 bot.run('127.0.0.1', 8080)
