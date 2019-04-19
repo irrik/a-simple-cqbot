@@ -1,4 +1,4 @@
-from funtion import *
+from function import *
 import threading
 
 # 定义新的线程处理定时任务
