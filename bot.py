@@ -5,12 +5,14 @@ import threading
 t = threading.Thread(target=loop, name='LoopThread')
 t.start()
 
-
+# 监控群消息
 @bot.on_message('group')
 def handle_msg(ctx):
     pprint(ctx)
     msg = ctx['message']
 
+    #匹配消息关键字 是命令语句就执行操作
+    
     # 一言
     if msg == "一言":
         bot.send_group_msg(group_id=ctx['group_id'], message=one_message())
@@ -71,7 +73,7 @@ def handle_msg(ctx):
         bot.send_group_msg(group_id=ctx['group_id'], message=hot_topic())
 
 
-
+    # 消息最后都会经过这一部分 里面封装了幅度检测以及脏话的监禁等
     always_on(ctx, msg)
 
 
@@ -103,4 +105,5 @@ def handle_msg_self(ctx):
     if msg.startswith('清空'):
         reSet(ctx)
 
+# 机器人监控了这个端口
 bot.run('127.0.0.1', 8080)
