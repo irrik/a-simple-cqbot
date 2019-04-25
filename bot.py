@@ -73,6 +73,11 @@ def handle_msg(ctx):
         bot.send_group_msg(group_id=ctx['group_id'], message=hot_topic())
 
 
+    # 随机数
+    if msg.startswith("随机数"):
+        bot.send_group_msg(group_id=ctx['group_id'], message=rand_number(ctx, msg))
+
+
     # 消息最后都会经过这一部分 里面封装了幅度检测以及脏话的监禁等
     always_on(ctx, msg)
 

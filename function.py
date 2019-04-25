@@ -370,6 +370,16 @@ def hot_topic():
     # print(reply)
     return reply
 
+
+def rand_number(ctx, msg):
+    try:
+        if re.match(r"^随机数\s*(\d+)\s*(\d+)", msg):
+            min_number = int(re.match(r"^随机数\s*(\d+)\s*(\d+)", msg).group(1))
+            max_number = int(re.match(r"^随机数\s*(\d+)\s*(\d+)", msg).group(2))
+            return str(random.randint(min_number, max_number))
+    finally:
+         bot.send_group_msg(group_id=ctx['group_id'], message="发生错误,请检查数据合法性(目前仅支持非零整数)")
+
 # 私聊记录 可以使用来作为笔记本使用
 
 
